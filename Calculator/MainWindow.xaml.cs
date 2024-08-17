@@ -24,24 +24,33 @@ namespace Calculator
         public string currentEquation = "";
         public float previousAnswer = 0;
         public static string numberCapture = "(\\d+(,\\d+)?)";
+        public static string LastAnswerVariable = "A";
         public Regex stringOperations = new($"{numberCapture}([-+]){numberCapture}");
         public Regex dotOperations = new($"{numberCapture}([\\*\\/]){numberCapture}");
         public Regex brackets = new($"\\({numberCapture}\\)");
-        public Regex A = new("A");
-        public Regex digitWithA = new("([\\dA])A");
+        public Regex ARegex = new(LastAnswerVariable);
+        public Regex digitWithA = new($"([\\d{LastAnswerVariable}]){LastAnswerVariable}");
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void addCharacter(char character)
-        {
+        private void addCharacter(char character) {
             string operations = "+*/-,";
-
-            if (currentEquation.Length > 0 && operations.Contains(character) && operations.Contains(currentEquation[currentEquation.Length - 1]))
-            {
+            if (currentEquation.Length > 0 && operations.Contains(character) && operations.Contains(currentEquation[currentEquation.Length - 1])) {
                 return;
             }
+
+            currentEquation += character;
+            TextboxOutput.Text = currentEquation;
+        }
+
+        private void addCharacter(string character) {
+            string operations = "+*/-,";
+            if (currentEquation.Length > 0 && operations.Contains(character) && operations.Contains(currentEquation[currentEquation.Length - 1])) {
+                return;
+            }
+
             currentEquation += character;
             TextboxOutput.Text = currentEquation;
         }
@@ -50,16 +59,16 @@ namespace Calculator
         {
             string current = (string)equation.Clone();
 
-            Match? digitWithAVariableMatch = null;
+            Match? digitWithVariableAMatch = null;
             do
             {
-                digitWithAVariableMatch = digitWithA.Match(current);
-                current = digitWithA.Replace(current, (Match match) => match.Groups[1].Value + "*A");
-            } while (digitWithAVariableMatch.Success);
+                digitWithVariableAMatch = digitWithA.Match(current);
+                current = digitWithA.Replace(current, (Match match) => match.Groups[1].Value + "*" + LastAnswerVariable);
+            } while (digitWithVariableAMatch.Success);
 
-            while (current.Contains('A'))
+            while (current.Contains(LastAnswerVariable))
             {
-                current = A.Replace(current, previousAnswer.ToString());
+                current = ARegex.Replace(current, previousAnswer.ToString());
             }
 
             while (true)
@@ -191,7 +200,7 @@ namespace Calculator
 
         private void ButtonVarAnswer_Click(object sender, RoutedEventArgs e)
         {
-            addCharacter('A');
+            addCharacter(LastAnswerVariable);
         }
 
         private void ButtonBracketClose_Click(object sender, RoutedEventArgs e)
